@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+	定义所有要用到的Sql语句和映射关系
+	namespace: 当前这个Mapper文件的唯一标识,可以自定义,但是不能与其他Mapper文件重合
+ -->
+<!-- <mapper namespace="userMapper"> -->
+<!-- 修改为namespace名称和接口名称一致 -->
+<mapper namespace="cn.itcast.mybatis.mapper.UserMapper">
+	<!-- 
+		定义一条Sql,其实就是一个statement
+		select: 代表查询语句,榆次类似的还有insert,updata,delete
+		id: 这条Sql的唯一标识,可以自定义,但是不能与其他Sql重复
+		parameterType: Sql的实际参数属性,要写java类型的全限定名
+		resultType: Sql返回的结果对应的Java数据类型,写全限定名
+	 -->
+	 
+	 <!-- 根据用户id查询用户 -->
+	 <!-- <select id="queryUserById" parameterType="java.lang.Long" resultType="cn.itcast.mybatis.pojo.User"> -->
+	 <!-- 使用简化的方式 -->
+	 <select id="queryUserById" parameterType="Long" resultType="User">
+	 	<!-- 这里定义真正的SQL语句,#{}代表占位符,当SQL被编译时,会编程?,然后接收真正的参数 -->
+	 	<!-- SELECT *, user_name AS userName FROM tb_user WHERE id = #{id} -->
+	 	SELECT * FROM tb_user WHERE id = #{id}
+	 </select>
+	 
+	 <!-- 
+	 	查询所有的用户 
+	 	resultType: 返回结果虽然是一个List,这里仍然写list中的数据类型,Mybatis会指定判断返回值个数并做封装
+	 -->
+	 <select id="queryAll"  resultType="cn.itcast.mybatis.pojo.User">
+	 	SELECT * FROM tb_user 
+	 </select>
+	 
+	 <!-- 添加用户信息 -->
+	 <insert id="insertUser" parameterType="cn.itcast.mybatis.pojo.User">
+	 	 <!-- 这里用#{字段名},mybatis会自动根据字段名,去User参数中找字段值,设置到Sql中 -->
+		 INSERT INTO tb_user (
+			id,
+			user_name,
+			PASSWORD,
+			NAME,
+			age,
+			sex,
+			birthday,
+			note,
+			created,
+			updated
+		 )
+	  	 VALUES
+			(
+			null,
+			#{userName},
+			#{password},
+			#{name},
+			#{age},
+			#{sex},
+			#{birthday},
+			#{note},
+			NOW(),
+			NOW()
+		 );
+	
+	 </insert>
+	 
+	 <!-- 修改用户 -->
+	 <update id="updataUser" parameterType="cn.itcast.mybatis.pojo.User">
+		UPDATE tb_user
+		SET 
+			user_name = #{userName},
+			password = #{password},
+			name = #{name},
+			age = #{age},
+			sex = #{sex},
+			birthday = #{birthday},
+			note = #{note},
+			updated = NOW()
+		WHERE
+			id = #{id}
+			
+	 </update>
+	 
+	 <!-- 根据id删除用户 -->
+	 <delete id="deleteUser" parameterType="java.lang.Long">
+	 	DELETE FROM tb_user WHERE id = #{id}
+	 </delete>
+	 
+	 
+	 
+</mapper>
