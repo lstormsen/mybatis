@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.InputStream;
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -60,6 +61,9 @@ public class UserMapperTest {
 		
 		//添加用户
 		userMapper.insertUser(user);
+		
+		//添加后尝试查看新增用户的id
+		System.out.println("id: " + user.getId());
 	}
 
 	@Test
@@ -77,6 +81,61 @@ public class UserMapperTest {
 	public void testDeleteUser() {
 		//通过id删除用户
 		userMapper.deleteUser(13L);
+	}
+	
+	@Test
+	public void testQueryUserByUsernameAndpassword(){
+		//通过用户名和密码 进行查询
+		User user = userMapper.queryUserByUsernameAndPassword("liuyan", "123456");
+		System.out.println(user);
+		
+	}
+	
+	@Test
+	public void testqueryMaleUserByName(){
+		//查询男性用户,如果姓名中有内容,则进行模糊查询
+		List<User> list = userMapper.queryMaleUserByName("");
+		
+		for (User user : list) {
+			System.out.println(user);
+		}
+	}
+	
+	//查询所有的用户,并按顺序排列
+	//orderType: 0,按照年龄升序; 1 按照年龄降序; 默认按照ID升序
+	@Test
+	public void testQueryAllUserAndSort(){
+		List<User> list = userMapper.queryAllUserAndSort(-1);
+		
+		for (User user : list) {
+			System.out.println(user);
+		}
+	}
+	
+	//根据姓名和年龄条件查询用户
+	@Test
+	public void testQueryUserByUsernameAndAge(){
+		List<User> list =  userMapper.queryUserByUsernameAndAge("岩", 28);
+		for (User user : list) {
+			System.out.println(user);
+		}
+		
+	}
+	
+	//修改用户,判断字段是否需要修改
+	@Test
+	public void testUpdate(){
+		User user = new User();
+		user.setId(15L);
+		user.setUserName("meimei");
+		user.setPassword("123456");
+		user.setName("霉霉");
+		user.setSex(2);
+		user.setAge(35);
+		
+		//修改
+		userMapper.updata(user);
+		
 	}
 
 }

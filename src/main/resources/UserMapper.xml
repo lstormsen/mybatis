@@ -35,8 +35,16 @@
 	 	SELECT * FROM tb_user 
 	 </select>
 	 
+	 
+	 <!-- 开启主键回填功能
+	 	      如果参数是复杂对象,name可以通过#{属性名}来获取参数中的属性值
+	 	  useGeneratedKeys: 自增主键的回填功能
+	 	  keyProperty: 主键对应java对象字段名
+	 	  keyColumn: 主键在数据库中的列名
+	  -->
 	 <!-- 添加用户信息 -->
-	 <insert id="insertUser" parameterType="cn.itcast.mybatis.pojo.User">
+	 <insert id="insertUser" parameterType="cn.itcast.mybatis.pojo.User"
+	 	useGeneratedKeys="true" keyProperty="id" keyColumn="id">
 	 	 <!-- 这里用#{字段名},mybatis会自动根据字段名,去User参数中找字段值,设置到Sql中 -->
 		 INSERT INTO tb_user (
 			id,
@@ -89,5 +97,117 @@
 	 </delete>
 	 
 	 
+	 <!-- 结果集映射配置
+	      id: 这个resultMap的唯一标识,不可重复
+	 	  type: 这个映射所标识的java对象类型,可以用别名
+	 	  autoMapping: true,开启自动映射,实现驼峰命名的自动映射配置
+	  -->
+	  <resultMap id="UserResultMap" type="user" autoMapping="true" >
+	  	<!-- 配置主键信息
+	  		 property: 主键在java对象中的属性名
+	  		 column: 主键在数据库中的列名
+	  	 -->
+	  	 <id property="id" column="id"/>
+	  	 <!-- 在这里配置字段名与列名的关系,解决字段名和列名不一致的问题 -->
+	  	 <!-- <result property="userName" column="user_name"/> -->
+	  </resultMap>
+	  
+	  <!-- 定义SQL片断
+	  	   id: SQL片断的唯一标识
+	   -->
+	   <sql id="userColumns">
+	   		id,user_name,password,name,age,sex,birthday,note,created,updated
+	   </sql>
+	  
+	  
+	 <!-- 根据用户名和密码查询用户 -->
+	 <!-- <select id="queryUserByUsernameAndPassword" resultType="User"> -->
+	 <select id="queryUserByUsernameAndPassword" resultMap="UserResultMap">
+	 	<!-- 方式1: 使用0,1,2 排序取法 -->
+	 	<!-- SELECT * FROM tb_user WHERE user_name = #{0}  AND password = #{1} -->
+	 	
+	 	<!-- 方式2: 使用param + i方式取值 -->
+	 	<!-- SELECT * FROM tb_user WHERE user_name = #{param1} AND password = #{param2} -->
+	 	
+	 	<!-- 方式3: 使用param注解形式 -->
+	 	<!-- SELECT * FROM tb_user WHERE user_name = #{userName} AND password = #{password} -->
+	 	
+	 	<!-- 用${}方式获取参数 -->
+	 	<!-- SELECT * FROM tb_user WHERE user_name = '${userName}' AND password = '${password}' -->
+	 	
+	 	<!-- 使用SQL片断获取参数 -->
+	 	SELECT <include refid="userColumns"/>
+	 	FROM tb_user
+	 	WHERE user_name = '${userName}' AND password = '${password}'
+	 </select>
+	 
+	 <!-- 查询男性用户,如果姓名不为空,则进行模糊查询 -->
+	 <select id="queryMaleUserByName" resultType="User">
+	 	SELECT * FROM tb_user WHERE sex = 1
+	 	<if test="name != null and name.trim() != ''">
+	 		AND name like #{name}
+	 	</if>
+	 </select>
+	 
+	 <!-- 查询所有的用户,根据orderType来排序,0,按照年龄升序;1,按照年龄降序;默认是根据ID升序 -->
+	 <select id="queryAllUserAndSort" resultType="User">
+	 	SELECT * FROM tb_user
+	 	<choose>
+	 		<when test="orderType == 0">
+	 			ORDER BY age ASC
+	 		</when>
+	 		
+	 		<when test="orderType == 1">
+	 			ORDER BY age DESC
+	 		</when>
+	 		
+	 		<otherwise>
+	 			ORDER BY ID ASC
+	 		</otherwise>
+	 	</choose>
+	 </select>
+	 
+	 <!-- 根据姓名和年龄查询用户
+		      如果有姓名不为空，则按照姓名模糊查找；如果年龄也不为空，则还要满足年龄小于指定年龄	 		
+	  -->
+	  <select id="queryUserByUsernameAndAge" resultType="User">
+	  		SELECT * FROM tb_user
+	  		<where><!-- where的作用就是检测Sql语句,排除多余的AND,避免Sql语法错误 -->
+	  			<if test="name != null and name.trim() != ''">
+	  				AND name LIKE '%${name}%'
+	  			</if>
+	  			<if test="age != null">
+	  				AND age &lt; #{age}
+	  			</if>
+	  		</where>
+	  </select>
+	  
+	  <!-- 修改用户,对不修改字段进行空值判断 -->
+	  <update id="update" parameterType="User">
+	  	UPDATE tb_user
+	  	<set><!-- set标签会自动校验标签错误,对多余的","进行删除 -->
+	  		<if test="userName != null and userName.trim() != ''">
+	  			userName = #{userName},
+	  		</if>
+	  		<if test="password != null and password.trim() != ''">
+	  			password = #{password},
+	  		</if>
+	  		<if test="name != null and name.trim() != ''">
+	  			name = #{name},
+	  		</if>
+	  		<if test="age != null">
+	  			age = #{age},
+	  		</if>
+	  		<if test="sex != null">
+	  			sex = #{sex},
+	  		</if>
+	  		<if test="birthday != null">
+	  			birthday = #{birthday}
+	  		</if>
+	  	</set>
+	  	
+	  	WHERE 
+	  		id = #{id}
+	  </update>
 	 
 </mapper>
