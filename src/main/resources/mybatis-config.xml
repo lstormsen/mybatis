@@ -8,8 +8,10 @@
   <properties resource="jdbc.properties"></properties>
   
   <settings>
-  	<!-- 关闭驼峰自动映射 -->
+  	<!-- 开启驼峰自动映射 -->
   	<setting name="mapUnderscoreToCamelCase" value="true"/>
+  	<!-- 开启全局二级缓存,默认为开启 -->
+  	<setting name="cacheEnabled" value="true"/>
   </settings>
   
   <!-- 为类起别名,简化书写 -->
@@ -56,6 +58,9 @@
   <mappers>
   	<!-- 方式1 resource: 在项目的resources的目录查找 -->
   	<mapper resource="UserMapper.xml" />
+  	
+  	<!-- 引入外部配置文件的Sql片断 -->
+  	<mapper resource="CommonMapper.xml"/>
   	
   	<!-- 方式2: 使用url地址,此方法几乎不用 -->
   	

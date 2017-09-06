@@ -3,6 +3,8 @@ package cn.itcast.mybatis.test;
 import static org.junit.Assert.*;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -18,6 +20,8 @@ import cn.itcast.mybatis.pojo.User;
 
 public class UserMapperTest {
 
+	private SqlSessionFactory sqlSessionFactory;
+	private SqlSession sqlSession;
 	private UserMapper userMapper;
 	
 	@Before
@@ -27,9 +31,9 @@ public class UserMapperTest {
 		//2 获取输入流,关联配置文件
 		InputStream inputStream = Resources.getResourceAsStream(resource);
 		//3 读取设置,获得session工厂,第二个参数: 指定使用的环境的名称
-		SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+		sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
 		//4 获取session,同时开启自动提交,每一个操作都是一个事务
-		SqlSession sqlSession = sqlSessionFactory.openSession(true);
+		 sqlSession = sqlSessionFactory.openSession(true);
 		
 		//获取UserMapper的实现类,通过mybatis获取
 		userMapper = sqlSession.getMapper(UserMapper.class);
@@ -60,10 +64,12 @@ public class UserMapperTest {
 		user.setNote("没有代表作...");
 		
 		//添加用户
-		userMapper.insertUser(user);
+		Integer n = this.userMapper.insertUser(user);
+		
+		System.out.println("已插入  " + n +"条数据");
 		
 		//添加后尝试查看新增用户的id
-		System.out.println("id: " + user.getId());
+		System.out.println("用户的id为: " + user.getId());
 	}
 
 	@Test
@@ -137,5 +143,96 @@ public class UserMapperTest {
 		userMapper.updata(user);
 		
 	}
+	
+	//根据多个id查询多个用户 
+	@Test
+	public void testQueryUsersByIds(){
+		/*List<Long> ids = new ArrayList<>();
+		ids.add(3L);
+		ids.add(5L);
+		ids.add(8L);
+		
+		List<User> userList = userMapper.queryUsersByIds(ids);*/
+		
+		//获取list集合的第二种方式: 使用匿名内部类的方式
+		/*List<User> userList =  userMapper.queryUsersByIds(
+				new ArrayList<Long>(){	
+					{
+						add(3L);
+						add(5L);
+						add(8L);
+					}
+				});*/
+		
+		//获取list集合的第3种方式:
+		List<User> userList =  userMapper.queryUsersByIds(Arrays.asList(3L,5L,8L));
+		
+		for (User user : userList) {
+			System.out.println(user);
+		}
+	}
+	
+	//测试以及缓存
+	@Test
+	public void testLevel1Cache(){
+		//同一个session中
+		//第1次查询
+		User user = userMapper.queryUserById(8L);
+		System.out.println(user);
+		
+		//第2次查询
+		user = userMapper.queryUserById(8L);
+		System.out.println(user);
+	}
+	
+	//测试增删改缓存清空
+	@Test
+	public void testClearCache(){
+		User user = userMapper.queryUserById(8L);
+		System.out.println(user);
+		
+		//一个空删除,观察slq语句的条数
+		userMapper.deleteUser(0L);
+		
+		user = userMapper.queryUserById(8L);
+		System.out.println(user);
+	}
+	
+	//测试手动清空缓存
+	@Test
+	public void testClearCache2(){
+		User user = userMapper.queryUserById(8L);
+		System.out.println(user);
+		
+		//手动清理缓存
+		sqlSession.clearCache();
+		
+		user = userMapper.queryUserById(8L);
+		System.out.println(user);
+	}
+	
+	//测试二级缓存
+	@Test
+	public void testLevel2Cache(){
+		//不同的session中
+		//第1次查询
+		User user = this.userMapper.queryUserById(8L);
+		System.out.println(user);
+		
+		//关闭session
+		this.sqlSession.close();
+		
+		//开启新的sqlSession
+		sqlSession = this.sqlSessionFactory.openSession(true);
+		
+		//重新获取Mapper
+		userMapper = this.sqlSession.getMapper(UserMapper.class);
+		
+		//第二次查询
+		User user2 = this.userMapper.queryUserById(8L);
+		System.out.println(user2);
+	}
+	
+	
 
 }

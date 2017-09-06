@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <!-- 一个mapper文件,这里定义要用到的sql语句
+  		namespace: 是每个mapper文件的唯一标识,可以自定义,但不可以重复
+   -->
+  <mapper namespace="commonMapper">
+  		<!-- 定义一个sql片断,ID: 这个sql语句的唯一标识 -->
+  		<sql id="userColumns">
+  			id,user_name,password,name,age,sex,birthday,note,created,updated
+  		</sql>
+  </mapper>
+  
+ 

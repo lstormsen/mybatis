@@ -17,7 +17,7 @@ public interface UserMapper {
 	List<User> queryAll();
 	
 	//添加用户
-	void insertUser(User user);
+	Integer insertUser(User user);
 	
 	//更新用户'
 	void updataUser(User user);
@@ -49,5 +49,9 @@ public interface UserMapper {
 	
 	//修改用户
 	void updata(User user);
+	
+	//根据id查询多个用户
+	List<User> queryUsersByIds(@Param("ids")List<Long> ids);	//这里可以是collection或者数组
+	
 	
 }

@@ -10,6 +10,17 @@
 <!-- <mapper namespace="userMapper"> -->
 <!-- 修改为namespace名称和接口名称一致 -->
 <mapper namespace="cn.itcast.mybatis.mapper.UserMapper">
+
+	<!-- 开启耳机缓存 -->
+	<cache/>
+	
+	<!-- 定义SQL片断
+	  	   id: SQL片断的唯一标识
+	   -->
+   <sql id="userColumns">
+   		id,user_name,password,name,age,sex,birthday,note,created,updated
+   </sql>
+	   
 	<!-- 
 		定义一条Sql,其实就是一个statement
 		select: 代表查询语句,榆次类似的还有insert,updata,delete
@@ -21,7 +32,7 @@
 	 <!-- 根据用户id查询用户 -->
 	 <!-- <select id="queryUserById" parameterType="java.lang.Long" resultType="cn.itcast.mybatis.pojo.User"> -->
 	 <!-- 使用简化的方式 -->
-	 <select id="queryUserById" parameterType="Long" resultType="User">
+	 <select id="queryUserById"  resultType="User">
 	 	<!-- 这里定义真正的SQL语句,#{}代表占位符,当SQL被编译时,会编程?,然后接收真正的参数 -->
 	 	<!-- SELECT *, user_name AS userName FROM tb_user WHERE id = #{id} -->
 	 	SELECT * FROM tb_user WHERE id = #{id}
@@ -31,7 +42,7 @@
 	 	查询所有的用户 
 	 	resultType: 返回结果虽然是一个List,这里仍然写list中的数据类型,Mybatis会指定判断返回值个数并做封装
 	 -->
-	 <select id="queryAll"  resultType="cn.itcast.mybatis.pojo.User">
+	 <select id="queryAll"  resultType="User">
 	 	SELECT * FROM tb_user 
 	 </select>
 	 
@@ -42,9 +53,8 @@
 	 	  keyProperty: 主键对应java对象字段名
 	 	  keyColumn: 主键在数据库中的列名
 	  -->
-	 <!-- 添加用户信息 -->
-	 <insert id="insertUser" parameterType="cn.itcast.mybatis.pojo.User"
-	 	useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+	 <!-- 添加用户信息 ,开启主键回显功能-->
+	 <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="id" >
 	 	 <!-- 这里用#{字段名},mybatis会自动根据字段名,去User参数中找字段值,设置到Sql中 -->
 		 INSERT INTO tb_user (
 			id,
@@ -75,7 +85,7 @@
 	 </insert>
 	 
 	 <!-- 修改用户 -->
-	 <update id="updataUser" parameterType="cn.itcast.mybatis.pojo.User">
+	 <update id="updataUser" >
 		UPDATE tb_user
 		SET 
 			user_name = #{userName},
@@ -92,7 +102,7 @@
 	 </update>
 	 
 	 <!-- 根据id删除用户 -->
-	 <delete id="deleteUser" parameterType="java.lang.Long">
+	 <delete id="deleteUser">
 	 	DELETE FROM tb_user WHERE id = #{id}
 	 </delete>
 	 
@@ -102,7 +112,7 @@
 	 	  type: 这个映射所标识的java对象类型,可以用别名
 	 	  autoMapping: true,开启自动映射,实现驼峰命名的自动映射配置
 	  -->
-	  <resultMap id="UserResultMap" type="user" autoMapping="true" >
+	  <resultMap id="userResultMap" type="User" autoMapping="true">
 	  	<!-- 配置主键信息
 	  		 property: 主键在java对象中的属性名
 	  		 column: 主键在数据库中的列名
@@ -112,17 +122,9 @@
 	  	 <!-- <result property="userName" column="user_name"/> -->
 	  </resultMap>
 	  
-	  <!-- 定义SQL片断
-	  	   id: SQL片断的唯一标识
-	   -->
-	   <sql id="userColumns">
-	   		id,user_name,password,name,age,sex,birthday,note,created,updated
-	   </sql>
-	  
-	  
 	 <!-- 根据用户名和密码查询用户 -->
 	 <!-- <select id="queryUserByUsernameAndPassword" resultType="User"> -->
-	 <select id="queryUserByUsernameAndPassword" resultMap="UserResultMap">
+	 <select id="queryUserByUsernameAndPassword" resultMap="userResultMap">
 	 	<!-- 方式1: 使用0,1,2 排序取法 -->
 	 	<!-- SELECT * FROM tb_user WHERE user_name = #{0}  AND password = #{1} -->
 	 	
@@ -136,14 +138,17 @@
 	 	<!-- SELECT * FROM tb_user WHERE user_name = '${userName}' AND password = '${password}' -->
 	 	
 	 	<!-- 使用SQL片断获取参数 -->
-	 	SELECT <include refid="userColumns"/>
+	 	<!-- SELECT <include refid="userColumns"/> -->
+	 	<!-- 使用外部文件配置的Sql片断 -->
+	 	SELECT <include refid="commonMapper.userColumns"/>
 	 	FROM tb_user
 	 	WHERE user_name = '${userName}' AND password = '${password}'
 	 </select>
 	 
 	 <!-- 查询男性用户,如果姓名不为空,则进行模糊查询 -->
 	 <select id="queryMaleUserByName" resultType="User">
-	 	SELECT * FROM tb_user WHERE sex = 1
+	 	SELECT <include refid="commonMapper.userColumns"/>
+	 	FROM tb_user WHERE sex = 1
 	 	<if test="name != null and name.trim() != ''">
 	 		AND name like #{name}
 	 	</if>
@@ -151,7 +156,8 @@
 	 
 	 <!-- 查询所有的用户,根据orderType来排序,0,按照年龄升序;1,按照年龄降序;默认是根据ID升序 -->
 	 <select id="queryAllUserAndSort" resultType="User">
-	 	SELECT * FROM tb_user
+	 	SELECT <include refid="commonMapper.userColumns"/>
+	 	FROM tb_user
 	 	<choose>
 	 		<when test="orderType == 0">
 	 			ORDER BY age ASC
@@ -171,7 +177,8 @@
 		      如果有姓名不为空，则按照姓名模糊查找；如果年龄也不为空，则还要满足年龄小于指定年龄	 		
 	  -->
 	  <select id="queryUserByUsernameAndAge" resultType="User">
-	  		SELECT * FROM tb_user
+	  		SELECT <include refid="commonMapper.userColumns"/> 
+	  		FROM tb_user
 	  		<where><!-- where的作用就是检测Sql语句,排除多余的AND,避免Sql语法错误 -->
 	  			<if test="name != null and name.trim() != ''">
 	  				AND name LIKE '%${name}%'
@@ -183,7 +190,7 @@
 	  </select>
 	  
 	  <!-- 修改用户,对不修改字段进行空值判断 -->
-	  <update id="update" parameterType="User">
+	  <update id="update">
 	  	UPDATE tb_user
 	  	<set><!-- set标签会自动校验标签错误,对多余的","进行删除 -->
 	  		<if test="userName != null and userName.trim() != ''">
@@ -209,5 +216,17 @@
 	  	WHERE 
 	  		id = #{id}
 	  </update>
+	  
+	  <!-- 根据多个id查询多个用户 -->
+	  <select id="queryUsersByIds" resultMap="userResultMap">
+	  	SELECT <include refid="commonMapper.userColumns"/> 
+	  	FROM tb_user 
+	  	WHERE id IN 
+	  	<!-- collection: 集合的名称,如果使用了@Param注解,这里就是注解中的值 -->
+	  	<foreach collection="ids" item="id" separator="," open="(" close=")">
+	  		#{id}
+	  	</foreach>
+	  		
+	  </select>
 	 
 </mapper>
